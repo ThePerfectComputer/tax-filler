@@ -9,6 +9,7 @@ The project can already:
 - download and inspect the official IRS Form 1120 fillable PDF
 - extract PDF field names and generate a draft field map
 - fill the PDF from JSON using either raw field names or mapped labels
+- fill checkbox fields using each widget's real PDF export state instead of assuming `/Yes`
 - generate probe PDFs for low-confidence fields so a human can visually confirm them
 
 The project does not yet have:
@@ -24,6 +25,7 @@ The project does not yet have:
 - `f1120-field-map.json`: current machine-readable field map
 - `f1120-field-map-review.md`: current unresolved / low-confidence items
 - `fill_pdf_from_json.py`: fill PDF from JSON values
+  - now uses PyMuPDF widget updates so checkbox values render visibly in output PDFs
 - `generate_low_confidence_probe.py`: generate review probes for unresolved fields
 - `example-1120-values.json`: sample JSON input
 

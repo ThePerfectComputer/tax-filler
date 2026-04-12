@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-from pypdf import PdfReader, PdfWriter
+import fitz
 
 
 def slugify(text: str) -> str:
@@ -28,20 +28,18 @@ def build_lookup(field_map_rows: list[dict]) -> tuple[dict[str, str], dict[str, 
     return lookup, metadata
 
 
-def normalize_value(value, field_type: str | None) -> str:
+def normalize_value(value, field_type: str | None):
     if field_type == "CheckBox":
-        if value in (True, "true", "True", "yes", "Yes", "on", "On", 1, "1"):
-            return "/Yes"
-        return "/Off"
+        return value
     return "" if value is None else str(value)
 
 
-def resolve_values(values: dict, field_map_rows: list[dict] | None) -> dict[str, str]:
+def resolve_values(values: dict, field_map_rows: list[dict] | None) -> dict[str, object]:
     if not field_map_rows:
-        return {key: "" if value is None else str(value) for key, value in values.items()}
+        return values.copy()
 
     lookup, metadata = build_lookup(field_map_rows)
-    resolved: dict[str, str] = {}
+    resolved: dict[str, object] = {}
     unknown: list[str] = []
     for key, value in values.items():
         field_name = lookup.get(key) or lookup.get(slugify(key))
@@ -57,20 +55,37 @@ def resolve_values(values: dict, field_map_rows: list[dict] | None) -> dict[str,
     return resolved
 
 
-def fill_pdf(input_pdf: Path, output_pdf: Path, resolved_values: dict[str, str]) -> None:
-    reader = PdfReader(str(input_pdf))
-    writer = PdfWriter()
-    writer.clone_document_from_reader(reader)
+def checkbox_state_for_value(widget: fitz.Widget, value) -> str:
+    if value in (False, "false", "False", "no", "No", "off", "Off", 0, "0", "/Off", None, ""):
+        return "Off"
 
-    for page in writer.pages:
-        writer.update_page_form_field_values(
-            page,
-            resolved_values,
-            auto_regenerate=True,
-        )
+    if isinstance(value, str):
+        candidate = value.lstrip("/")
+        states = widget.button_states().get("normal", [])
+        if candidate in states:
+            return candidate
 
-    with output_pdf.open("wb") as handle:
-        writer.write(handle)
+    return str(widget.on_state())
+
+
+def fill_pdf(input_pdf: Path, output_pdf: Path, resolved_values: dict[str, object]) -> None:
+    pdf = fitz.open(str(input_pdf))
+
+    for page in pdf:
+        for widget in page.widgets():
+            value = resolved_values.get(widget.field_name)
+            if value is None and widget.field_name not in resolved_values:
+                continue
+
+            if widget.field_type_string == "CheckBox":
+                state = checkbox_state_for_value(widget, value)
+                widget.field_value = state
+            else:
+                widget.field_value = "" if value is None else str(value)
+            widget.update()
+
+    pdf.save(str(output_pdf), garbage=4, deflate=True)
+    pdf.close()
 
 
 def parse_args() -> argparse.Namespace:
