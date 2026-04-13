@@ -7,27 +7,28 @@ This directory is the start of a standalone Form 1120 PDF-filling project.
 The project can already:
 
 - download and inspect the official IRS Form 1120 fillable PDF
-- extract PDF field names and generate a draft field map
-- fill the PDF from JSON using either raw field names or mapped labels
 - fill checkbox fields using each widget's real PDF export state instead of assuming `/Yes`
-- generate probe PDFs for low-confidence fields so a human can visually confirm them
+- accept nested, human-readable Form 1120 JSON schemas for 2024 and 2025
 
 The project does not yet have:
 
-- a polished business-facing JSON schema
-- a fully resolved field map for every field on the form
-- a dedicated repository layout, tests, or packaging
+- full friendly-schema coverage for every field on the form
+- tests or packaging
 
-## Files Kept
+## Layout
 
-- `f1120.pdf`: source fillable IRS Form 1120 PDF
-- `map_1120_fields.py`: field extraction and mapping logic
-- `f1120-field-map.json`: current machine-readable field map
-- `f1120-field-map-review.md`: current unresolved / low-confidence items
-- `fill_pdf_from_json.py`: fill PDF from JSON values
-  - now uses PyMuPDF widget updates so checkbox values render visibly in output PDFs
-- `generate_low_confidence_probe.py`: generate review probes for unresolved fields
-- `example-1120-values.json`: sample JSON input
+- `forms/f1120_2025.pdf`: 2025 fillable IRS Form 1120 PDF
+- `forms/f1120_2024.pdf`: 2024 fillable IRS Form 1120 PDF
+- `srcs/map_1120_fields.py`: field extraction and mapping logic
+- `srcs/fill_pdf_from_json.py`: fill PDF from JSON values
+  - uses PyMuPDF widget updates so checkbox values render visibly in output PDFs
+- `srcs/friendly_1120_shared.py`: shared helpers for friendly Form 1120 schemas
+- `srcs/friendly_1120_2024.py`: explicit 2024-friendly schema mapper
+- `srcs/friendly_1120_2025.py`: explicit 2025-friendly schema mapper
+- `examples/example-1120-friendly-2025.json`: nested friendly sample input for the 2025 form
+- `examples/example-1120-friendly-2024.json`: nested friendly sample input for the 2024 form
+- `srcs/map_1120_fields.py`: exploratory field-mapping script for deeper reverse-engineering work
+- `srcs/generate_low_confidence_probe.py`: exploratory probe generator for unresolved fields
 
 ## Removed Clutter
 
@@ -45,58 +46,52 @@ These were deleted because they were generated artifacts and can be regenerated:
 Rebuild the field map:
 
 ```bash
-python3 taxes/tax-filler/map_1120_fields.py
+cd taxes/tax-filler
+python3 srcs/map_1120_fields.py
 ```
 
 Fill the PDF from JSON:
 
 ```bash
-python3 taxes/tax-filler/fill_pdf_from_json.py \
-  --pdf taxes/tax-filler/f1120.pdf \
-  --values taxes/tax-filler/example-1120-values.json \
-  --field-map taxes/tax-filler/f1120-field-map.json \
-  --output taxes/tax-filler/output.pdf
+cd taxes/tax-filler
+python3 srcs/fill_pdf_from_json.py \
+  --pdf forms/f1120_2025.pdf \
+  --values examples/example-1120-friendly-2025.json \
+  --output output-friendly.pdf
 ```
 
-Generate a low-confidence probe package:
+Fill the 2024 PDF from friendly nested JSON:
 
 ```bash
-python3 taxes/tax-filler/generate_low_confidence_probe.py
+cd taxes/tax-filler
+python3 srcs/fill_pdf_from_json.py \
+  --pdf forms/f1120_2024.pdf \
+  --values examples/example-1120-friendly-2024.json \
+  --output output-friendly-2024.pdf
 ```
 
-## Low-Confidence Mappings
+The friendly schema currently supports:
 
-These are the remaining low-confidence or unresolved fields as of the current map:
+- tax period begin/end dates
+- company identity and address fields
+- filing-status checkboxes on page 1
+- core page 1 income and deduction lines
+- page 1 payment / refund fields
+- a substantial slice of Schedule J
+- derived totals for core page 1 rollups and taxable income
+- a broader set of Schedule K yes/no questions plus a few related amount fields
+- separate explicit schema mappers for 2024 and 2025
 
-1. Page 2
-   - `topmostSubform[0].Page2[0].Table_ScheduleC[0].Line2[0].f2_5[0]`
-     - current label: `Dividends from 20%-or-more-owned domestic corporations (other than debt-financed`
-   - `topmostSubform[0].Page2[0].Table_ScheduleC[0].Line15[0].f2_44[0]`
-     - current label: `Reserved for future use`
-   - `topmostSubform[0].Page2[0].Table_ScheduleC[0].Line20[0].f2_65[0]`
-     - current label: empty
-   - `topmostSubform[0].Page2[0].Table_ScheduleC[0].Line22[0].f2_71[0]`
-     - current label: `Section 250 deduction (attach Form 8993) (see instructions for limitations) Total dividends and inclusions Add column (a), lines 9 through 20 Enter here and on`
+Exploratory reverse-engineering tools still exist if deeper coverage work is needed:
 
-2. Page 4
-   - `topmostSubform[0].Page4[0].c4_8[0]`
-     - current label: `Schedule K line 7 Yes`
-   - `topmostSubform[0].Page4[0].c4_8[1]`
-     - current label: `Schedule K line 7 No`
-
-3. Page 5
-   - `topmostSubform[0].Page5[0].c5_4[1]`
-     - current label: `b If "Yes," did or will the corporation file required Form(s) 1099?`
-   - `topmostSubform[0].Page5[0].c5_17[0]`
-     - current label: `Is the corporation a member of a controlled group? If "Yes," attach Schedule O (Form 1120) See instructions Corporate Alternative Minimum Tax:`
-   - `topmostSubform[0].Page5[0].c5_17[1]`
-     - current label: `Is the corporation a member of a controlled group? If "Yes," attach Schedule O (Form 1120) See instructions Corporate Alternative Minimum Tax:`
-   - `topmostSubform[0].Page5[0].c5_25[0]`
-     - current label: `in the instructions, of $10 million or more? If "Yes," attach a statement See instructions Reserved for future use`
-   - `topmostSubform[0].Page5[0].c5_25[1]`
-     - current label: `in the instructions, of $10 million or more? If "Yes," attach a statement See instructions Reserved for future use`
+```bash
+cd taxes/tax-filler
+python3 srcs/map_1120_fields.py
+python3 srcs/generate_low_confidence_probe.py
+```
 
 ## Notes
 
-- A substantial number of page 1, page 3, page 4 table, and page 6 Schedule L fields were confirmed manually using probe markers and screenshots.
-- The most unresolved pieces now are page 2 text fields and page 4/page 5 checkboxes.
+- The repo is now centered on year-specific friendly fillers rather than raw field-name inputs.
+- 2025 support is currently broader than 2024.
+- 2024 still has major uncovered sections, especially Schedule C on page 2 and large parts of page 6.

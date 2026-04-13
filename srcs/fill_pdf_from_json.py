@@ -6,6 +6,9 @@ import re
 from pathlib import Path
 
 import fitz
+from friendly_1120_2024 import resolve_friendly_1120_2024_values
+from friendly_1120_2025 import resolve_friendly_1120_2025_values
+from friendly_1120_shared import looks_like_friendly_1120
 
 
 def slugify(text: str) -> str:
@@ -26,6 +29,18 @@ def build_lookup(field_map_rows: list[dict]) -> tuple[dict[str, str], dict[str, 
             lookup[label] = field_name
             lookup[slugify(label)] = field_name
     return lookup, metadata
+
+
+def infer_form_year(input_pdf: Path) -> int | None:
+    pdf = fitz.open(str(input_pdf))
+    try:
+        text = pdf[0].get_text("text")[:2000]
+    finally:
+        pdf.close()
+    match = re.search(r"Form 1120 \((\d{4})\)", text)
+    if match is None:
+        return None
+    return int(match.group(1))
 
 
 def normalize_value(value, field_type: str | None):
@@ -53,6 +68,32 @@ def resolve_values(values: dict, field_map_rows: list[dict] | None) -> dict[str,
         unknown_text = ", ".join(sorted(unknown))
         raise SystemExit(f"Unrecognized JSON keys: {unknown_text}")
     return resolved
+
+
+def resolve_input_values(input_pdf: Path, values: dict, field_map_rows: list[dict] | None) -> dict[str, object]:
+    if looks_like_friendly_1120(values):
+        year = values.get("tax_year") or infer_form_year(input_pdf)
+        if year is None:
+            raise SystemExit("Could not infer Form 1120 year from PDF. Add a 'tax_year' field to the JSON.")
+        try:
+            year = int(year)
+        except (TypeError, ValueError):
+            raise SystemExit(f"Invalid tax_year value: {year!r}")
+
+        if year == 2024:
+            resolved = resolve_friendly_1120_2024_values(values)
+        elif year == 2025:
+            resolved = resolve_friendly_1120_2025_values(values)
+        else:
+            raise SystemExit(f"Unsupported friendly Form 1120 tax year: {year}")
+        overrides = values.get("overrides")
+        if overrides is not None:
+            if not isinstance(overrides, dict):
+                raise SystemExit("Friendly JSON field 'overrides' must be an object.")
+            resolved.update(resolve_values(overrides, field_map_rows))
+        return resolved
+
+    return resolve_values(values, field_map_rows)
 
 
 def checkbox_state_for_value(widget: fitz.Widget, value) -> str:
@@ -117,7 +158,7 @@ def main() -> int:
         if not isinstance(field_map_rows, list):
             raise SystemExit("Field map JSON must be a list of field metadata rows.")
 
-    resolved_values = resolve_values(values, field_map_rows)
+    resolved_values = resolve_input_values(input_pdf, values, field_map_rows)
     fill_pdf(input_pdf, output_pdf, resolved_values)
 
     print(f"Wrote {output_pdf}")

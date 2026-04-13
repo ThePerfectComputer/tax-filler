@@ -16,12 +16,13 @@ except ImportError:  # pragma: no cover - optional fallback
     pytesseract = None
 
 
-ROOT = Path(__file__).resolve().parent
-INPUT_PDF = ROOT / "f1120.pdf"
-OUTPUT_JSON = ROOT / "f1120-field-map.json"
-OUTPUT_CSV = ROOT / "f1120-field-map.csv"
-OUTPUT_REVIEW = ROOT / "f1120-field-map-review.md"
-DEBUG_DIR = ROOT / "debug"
+SRC_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SRC_DIR.parent
+INPUT_PDF = PROJECT_ROOT / "forms" / "f1120_2025.pdf"
+OUTPUT_JSON = PROJECT_ROOT / "f1120-field-map.json"
+OUTPUT_CSV = PROJECT_ROOT / "f1120-field-map.csv"
+OUTPUT_REVIEW = PROJECT_ROOT / "f1120-field-map-review.md"
+DEBUG_DIR = PROJECT_ROOT / "debug"
 
 
 CONFIRMED_LABELS = {

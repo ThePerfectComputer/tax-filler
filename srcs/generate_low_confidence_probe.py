@@ -7,13 +7,14 @@ from pathlib import Path
 from fill_pdf_from_json import fill_pdf
 
 
-ROOT = Path(__file__).resolve().parent
-FIELD_MAP_PATH = ROOT / "f1120-field-map.json"
-INPUT_PDF = ROOT / "f1120.pdf"
-OUTPUT_PDF = ROOT / "f1120-low-confidence-probe.pdf"
-OUTPUT_JSON = ROOT / "f1120-low-confidence-probe-values.json"
-OUTPUT_MANIFEST = ROOT / "f1120-low-confidence-probe-manifest.json"
-OUTPUT_REVIEW = ROOT / "f1120-low-confidence-probe-review.md"
+SRC_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SRC_DIR.parent
+FIELD_MAP_PATH = PROJECT_ROOT / "f1120-field-map.json"
+INPUT_PDF = PROJECT_ROOT / "forms" / "f1120_2025.pdf"
+OUTPUT_PDF = PROJECT_ROOT / "f1120-low-confidence-probe.pdf"
+OUTPUT_JSON = PROJECT_ROOT / "f1120-low-confidence-probe-values.json"
+OUTPUT_MANIFEST = PROJECT_ROOT / "f1120-low-confidence-probe-manifest.json"
+OUTPUT_REVIEW = PROJECT_ROOT / "f1120-low-confidence-probe-review.md"
 
 
 def is_flagged(row: dict) -> bool:

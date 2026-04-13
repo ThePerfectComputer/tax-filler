@@ -1,0 +1,72 @@
+{
+  "tax_year": 2025,
+  "tax_period": {
+    "begin_date": "2025-01-01",
+    "end_date": "2025-12-31"
+  },
+  "company": {
+    "name": "Example Widget Corporation",
+    "address": {
+      "street": "123 Example Street",
+      "suite": "Suite 400",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "USA",
+      "postal_code": "19801"
+    },
+    "ein": "12-3456789",
+    "date_incorporated": "2020-01-01",
+    "total_assets": 250000,
+    "business_activity_code": "541511",
+    "business_activity": "Custom computer programming services",
+    "product_or_service": "Embedded systems design"
+  },
+  "filing": {
+    "initial_return": false,
+    "final_return": false,
+    "name_change": false,
+    "address_change": false
+  },
+  "income": {
+    "gross_receipts_or_sales": 100000,
+    "returns_and_allowances": 0,
+    "cost_of_goods_sold": 25000,
+    "dividends_and_inclusions": 0,
+    "interest_income": 150,
+    "gross_rents": 0,
+    "gross_royalties": 0,
+    "capital_gain_net_income": 500,
+    "net_gain_or_loss_form_4797": 0,
+    "other_income": 200
+  },
+  "deductions": {
+    "compensation_of_officers": 0,
+    "salaries_and_wages": 20000,
+    "repairs_and_maintenance": 500,
+    "bad_debts": 0,
+    "rents": 12000,
+    "taxes_and_licenses": 1500,
+    "interest_expense": 300,
+    "charitable_contributions": 0,
+    "depreciation": 800,
+    "depletion": 0,
+    "advertising": 1200,
+    "pension_profit_sharing": 0,
+    "employee_benefit_programs": 2500,
+    "energy_efficient_commercial_buildings_deduction": 0,
+    "other_deductions": 900
+  },
+  "tax": {
+    "net_operating_loss_deduction": 0,
+    "special_deductions": 0
+  },
+  "schedule_k": {
+    "schedule_utp_required": false,
+    "payments_require_1099": true,
+    "files_required_1099": true,
+    "foreign_owner_25_percent": false,
+    "digital_asset_activity": false,
+    "controlled_group_member": false,
+    "large_subchapter_k_basis_adjustment": false
+  }
+}
