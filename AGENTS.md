@@ -51,7 +51,7 @@ Avoid dumping regenerated output PDFs, screenshots, or other bulky scratch artif
   - Exploratory field-mapping script used when expanding coverage into still-unmapped sections.
 
 - `README.md`
-  - Current project status and unresolved field summary.
+  - Current project status, usage notes, and coverage caveats.
 
 - `STRATEGIES.md`
   - Extraction and validation strategies used so far and recommended going forward.

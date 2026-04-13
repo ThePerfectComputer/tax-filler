@@ -27,7 +27,6 @@ The project does not yet have:
 - `srcs/friendly_1120_2025.py`: explicit 2025-friendly schema mapper
 - `examples/example-1120-friendly-2025.json`: nested friendly sample input for the 2025 form
 - `examples/example-1120-friendly-2024.json`: nested friendly sample input for the 2024 form
-- `srcs/map_1120_fields.py`: exploratory field-mapping script for deeper reverse-engineering work
 - `srcs/generate_low_confidence_probe.py`: exploratory probe generator for unresolved fields
 
 ## Removed Clutter
@@ -82,7 +81,6 @@ The friendly schema currently supports:
 - Schedule L
 - Schedule M-1
 - Schedule M-2
-- page 1 payment / refund fields
 - derived totals for core page 1 rollups and taxable income
 - separate explicit schema mappers for 2024 and 2025
 - choice-style checkbox groups such as accounting method and refund account type
