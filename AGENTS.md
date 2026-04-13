@@ -5,8 +5,8 @@ This directory is the beginning of a standalone Form 1120 PDF-filling project.
 The immediate goal is:
 
 1. support filling Form 1120 from human-readable JSON
-2. expand year-specific friendly-schema coverage for 2024 and 2025
-3. keep exploratory reverse-engineering tools available for unresolved sections
+2. keep the 2024 and 2025 year-specific schemas maintainable and honest
+3. keep exploratory reverse-engineering tools available for any future IRS-form drift
 
 ## Directory Intent
 
@@ -68,18 +68,17 @@ Those confirmations were baked back into the current code and reverse-engineerin
 
 Do not throw those away by replacing confirmed overrides with lower-confidence heuristic guesses.
 
-## Current Remaining Coverage Gaps
+## Current Coverage Status
 
-As of the latest verification pass, the biggest uncovered areas for the friendly schema are concentrated in:
+As of the latest verification pass:
 
-1. Page 2 Schedule C
-   - essentially the full page is still outside the friendly schema
+1. `forms/f1120_2024.pdf`
+   - all 471 fillable widgets are covered by the friendly schema layer or derived field handling
 
-2. Page 4 Schedule K
-   - accounting-method controls, ownership tables, and several yes/no prompts
+2. `forms/f1120_2025.pdf`
+   - all 481 fillable widgets are covered by the friendly schema layer or derived field handling
 
-3. Page 6
-   - Schedule L, Schedule M-1, and Schedule M-2 are largely uncovered in the friendly schema
+Coverage here means every fillable PDF widget can be reached. It does not mean every friendly key is equally polished. A few 2024 labels remain deliberately generic where the IRS widget structure is unusually awkward.
 
 ## Recommended Working Style
 
@@ -115,6 +114,7 @@ python3 srcs/generate_low_confidence_probe.py
    - human confirmation only where ambiguity remains
 
 5. After confirming fields, add them to the appropriate friendly year module and verify by producing a filled PDF from an example JSON.
+6. If a mapping is reachable but semantically fuzzy, prefer a neutral field name like `field_1` over a confident-but-wrong tax label.
 
 ## Filling Workflow
 
@@ -142,9 +142,9 @@ python3 srcs/fill_pdf_from_json.py \
 
 The most useful next steps are:
 
-1. finish resolving the remaining low-confidence fields
-2. improve coverage on page 2, page 4, and page 6 for the 2024 form
-3. keep the 2024 and 2025 schemas aligned where practical
+1. polish low-confidence or generic field names where additional evidence exists
+2. keep the 2024 and 2025 schemas aligned where practical
+3. add a small validation or regression test for coverage and example fills
 4. add lightweight project packaging such as:
    - `requirements.txt` or `pyproject.toml`
    - a small README usage example

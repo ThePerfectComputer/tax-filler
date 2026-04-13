@@ -27,11 +27,17 @@ class CheckboxPair:
 
 
 @dataclass(frozen=True)
+class ChoiceCheckboxGroup:
+    options: dict[str, tuple[str, ...]]
+
+
+@dataclass(frozen=True)
 class Form1120Config:
     year: int
     direct_fields: dict[str, str]
     single_checkboxes: dict[str, str]
     yes_no_checkboxes: dict[str, CheckboxPair]
+    choice_checkboxes: dict[str, ChoiceCheckboxGroup]
 
 
 def looks_like_friendly_1120(values: dict[str, Any]) -> bool:
@@ -207,5 +213,20 @@ def resolve_with_config(
             raise SystemExit(f"Friendly checkbox field '{path}' must be true or false.")
         resolved[pair.yes] = bool(value)
         resolved[pair.no] = not bool(value)
+
+    for path, group in config.choice_checkboxes.items():
+        value = get_by_path(values, path)
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            raise SystemExit(f"Friendly choice field '{path}' must be a string.")
+        normalized = value.strip().lower()
+        if normalized not in group.options:
+            allowed = ", ".join(sorted(group.options))
+            raise SystemExit(f"Friendly choice field '{path}' must be one of: {allowed}.")
+        for option, field_names in group.options.items():
+            is_selected = option == normalized
+            for field_name in field_names:
+                resolved[field_name] = is_selected
 
     return resolved

@@ -9,10 +9,10 @@ The project can already:
 - download and inspect the official IRS Form 1120 fillable PDF
 - fill checkbox fields using each widget's real PDF export state instead of assuming `/Yes`
 - accept nested, human-readable Form 1120 JSON schemas for 2024 and 2025
+- cover every fillable widget in both the 2024 and 2025 source PDFs
 
 The project does not yet have:
 
-- full friendly-schema coverage for every field on the form
 - tests or packaging
 
 ## Layout
@@ -75,12 +75,17 @@ The friendly schema currently supports:
 - tax period begin/end dates
 - company identity and address fields
 - filing-status checkboxes on page 1
-- core page 1 income and deduction lines
+- page 1 income, deduction, tax, payment, refund, and signing areas
+- Schedule C
+- Schedule J
+- Schedule K
+- Schedule L
+- Schedule M-1
+- Schedule M-2
 - page 1 payment / refund fields
-- a substantial slice of Schedule J
 - derived totals for core page 1 rollups and taxable income
-- a broader set of Schedule K yes/no questions plus a few related amount fields
 - separate explicit schema mappers for 2024 and 2025
+- choice-style checkbox groups such as accounting method and refund account type
 
 Exploratory reverse-engineering tools still exist if deeper coverage work is needed:
 
@@ -93,5 +98,6 @@ python3 srcs/generate_low_confidence_probe.py
 ## Notes
 
 - The repo is now centered on year-specific friendly fillers rather than raw field-name inputs.
-- 2025 support is currently broader than 2024.
-- 2024 still has major uncovered sections, especially Schedule C on page 2 and large parts of page 6.
+- Both 2024 and 2025 now have full widget coverage.
+- Full widget coverage means every fillable PDF field is reachable through the friendly schema layer or a derived field path.
+- A few 2024 labels remain intentionally conservative or generic where the IRS widget structure is awkward, especially in parts of Schedule K and the paid preparer block.

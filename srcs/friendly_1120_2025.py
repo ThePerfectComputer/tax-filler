@@ -2,12 +2,200 @@ from __future__ import annotations
 
 from typing import Any
 
-from friendly_1120_shared import CheckboxPair, Form1120Config, resolve_with_config
+from friendly_1120_shared import CheckboxPair, ChoiceCheckboxGroup, Form1120Config, resolve_with_config
 
 
 PAGE1 = "topmostSubform[0].Page1[0]"
 NAME = f"{PAGE1}.NameFieldsReadOrder[0]"
 A = f"{PAGE1}.A_ReadOrder[0]"
+PAGE2 = "topmostSubform[0].Page2[0].Table_ScheduleC[0]"
+PAGE4 = "topmostSubform[0].Page4[0]"
+PAGE5 = "topmostSubform[0].Page5[0]"
+PAGE6A = "topmostSubform[0].Page6[0].Table_SchL_Assets[0]"
+PAGE6L = "topmostSubform[0].Page6[0].Table_SchL_Liabilities[0]"
+PAGE6 = "topmostSubform[0].Page6[0]"
+
+
+def _add_schedule_c_fields(direct_fields: dict[str, str]) -> None:
+    row_specs = [
+        ("line_1", "Line1", 1),
+        ("line_2", "Line2", 4),
+        ("line_3", "Line3", 7),
+        ("line_4", "Line4", 10),
+        ("line_5", "Line5", 13),
+        ("line_6", "Line6", 16),
+        ("line_7", "Line7", 19),
+        ("line_8", "Line8", 22),
+        ("line_9", "Line9", 25),
+        ("line_10", "Line10", 28),
+        ("line_11", "Line11", 31),
+        ("line_12", "Line12", 34),
+        ("line_13", "Line13", 37),
+        ("line_14", "Line14", 40),
+        ("line_15", "Line15", 43),
+        ("line_16a", "Line16a", 46),
+        ("line_16b", "Line16b", 49),
+        ("line_16c", "Line16c", 52),
+        ("line_17", "Line17", 55),
+        ("line_18", "Line18", 58),
+        ("line_19", "Line19", 61),
+        ("line_20", "Line20", 64),
+        ("line_21", "Line21", 67),
+        ("line_22", "Line22", 70),
+        ("line_23", "Line23", 73),
+    ]
+    for slug, row_name, start in row_specs:
+        direct_fields[f"schedule_c.{slug}.dividends_and_inclusions"] = f"{PAGE2}.{row_name}[0].f2_{start}[0]"
+        direct_fields[f"schedule_c.{slug}.percentage"] = f"{PAGE2}.{row_name}[0].f2_{start + 1}[0]"
+        direct_fields[f"schedule_c.{slug}.special_deductions"] = f"{PAGE2}.{row_name}[0].f2_{start + 2}[0]"
+    direct_fields["schedule_c.total_special_deductions"] = "topmostSubform[0].Page2[0].f2_76[0]"
+
+
+def _add_schedule_k_page4_fields(
+    direct_fields: dict[str, str],
+    single_checkboxes: dict[str, str],
+    yes_no: dict[str, CheckboxPair],
+    choice_checkboxes: dict[str, ChoiceCheckboxGroup],
+) -> None:
+    choice_checkboxes["schedule_k.accounting_method"] = ChoiceCheckboxGroup(
+        options={
+            "cash": (f"{PAGE4}.c4_1[0]",),
+            "accrual": (f"{PAGE4}.c4_1[1]",),
+            "other": (f"{PAGE4}.c4_1[2]",),
+        }
+    )
+    direct_fields["schedule_k.other_accounting_method"] = f"{PAGE4}.f4_1[0]"
+    yes_no.update(
+        {
+            "schedule_k.subsidiary_in_affiliated_group": CheckboxPair(f"{PAGE4}.c4_2[0]", f"{PAGE4}.c4_2[1]"),
+            "schedule_k.entity_owned_stock_20_or_50_percent": CheckboxPair(f"{PAGE4}.c4_3[0]", f"{PAGE4}.c4_3[1]"),
+            "schedule_k.individual_owned_stock_20_or_50_percent": CheckboxPair(f"{PAGE4}.c4_4[0]", f"{PAGE4}.c4_4[1]"),
+            "schedule_k.owns_other_corporation_stock": CheckboxPair(f"{PAGE4}.c4_5[0]", f"{PAGE4}.c4_5[1]"),
+            "schedule_k.owns_partnership_or_trust_interest": CheckboxPair(f"{PAGE4}.c4_6[0]", f"{PAGE4}.c4_6[1]"),
+            "schedule_k.paid_dividends_in_excess_of_earnings": CheckboxPair(f"{PAGE4}.c4_7[0]", f"{PAGE4}.c4_7[1]"),
+        }
+    )
+    direct_fields["schedule_k.parent_corporation_name_and_ein"] = f"{PAGE4}.IfYes_ReadOrder[0].f4_5[0]"
+
+    for row_index in range(1, 4):
+        row = f"Row{row_index}[0]"
+        base = 6 + (row_index - 1) * 4
+        prefix = f"schedule_k.line_5a_table.row_{row_index}"
+        direct_fields[f"{prefix}.name_of_corporation"] = f"{PAGE4}.Table_Line5a[0].{row}.f4_{base}[0]"
+        direct_fields[f"{prefix}.employer_identification_number"] = f"{PAGE4}.Table_Line5a[0].{row}.f4_{base + 1}[0]"
+        direct_fields[f"{prefix}.country_of_incorporation"] = f"{PAGE4}.Table_Line5a[0].{row}.f4_{base + 2}[0]"
+        direct_fields[f"{prefix}.percentage_owned_in_voting_stock"] = f"{PAGE4}.Table_Line5a[0].{row}.f4_{base + 3}[0]"
+
+    for row_index in range(1, 4):
+        row = f"Row{row_index}[0]"
+        base = 18 + (row_index - 1) * 4
+        prefix = f"schedule_k.line_5b_table.row_{row_index}"
+        direct_fields[f"{prefix}.name_of_entity"] = f"{PAGE4}.Table_Line5b[0].{row}.f4_{base}[0]"
+        direct_fields[f"{prefix}.employer_identification_number"] = f"{PAGE4}.Table_Line5b[0].{row}.f4_{base + 1}[0]"
+        direct_fields[f"{prefix}.country_of_organization"] = f"{PAGE4}.Table_Line5b[0].{row}.f4_{base + 2}[0]"
+        direct_fields[f"{prefix}.maximum_percentage_owned"] = f"{PAGE4}.Table_Line5b[0].{row}.f4_{base + 3}[0]"
+
+    direct_fields["schedule_k.foreign_owner_percentage"] = f"{PAGE4}.f4_31[0]"
+    direct_fields["schedule_k.foreign_owner_country"] = f"{PAGE4}.f4_32[0]"
+    direct_fields["schedule_k.forms_5472_attached_count"] = f"{PAGE4}.f4_33[0]"
+    single_checkboxes["schedule_k.publicly_offered_debt_with_oid"] = f"{PAGE4}.c4_9[0]"
+    direct_fields["schedule_k.tax_exempt_interest_received_or_accrued"] = f"{PAGE4}.f4_34[0]"
+    direct_fields["schedule_k.shareholder_count"] = f"{PAGE4}.f4_35[0]"
+    single_checkboxes["schedule_k.elect_to_forego_nol_carryback"] = f"{PAGE4}.c4_10[0]"
+    direct_fields["schedule_k.available_nol_carryover"] = f"{PAGE4}.f4_36[0]"
+
+
+def _add_schedule_l_m1_m2_fields(direct_fields: dict[str, str]) -> None:
+    asset_rows = [
+        ("cash", "Line1", 1),
+        ("trade_notes_and_accounts_receivable", "Line2a", 5),
+        ("less_allowance_for_bad_debts", "Line2b", 9),
+        ("inventories", "Line3", 13),
+        ("us_government_obligations", "Line4", 17),
+        ("tax_exempt_securities", "Line5", 21),
+        ("other_current_assets", "Line6", 25),
+        ("loans_to_shareholders", "Line7", 29),
+        ("mortgage_and_real_estate_loans", "Line8", 33),
+        ("other_investments", "Line9", 37),
+        ("buildings_and_other_depreciable_assets", "Line10a", 41),
+        ("less_accumulated_depreciation", "Line10b", 45),
+        ("depletable_assets", "Line11a", 49),
+        ("less_accumulated_depletion", "Line11b", 53),
+        ("land", "Line12", 57),
+        ("intangible_assets_amortizable_only", "Line13a", 61),
+        ("less_accumulated_amortization", "Line13b", 65),
+        ("other_assets", "Line14", 69),
+        ("total_assets", "Line15", 73),
+    ]
+    liability_rows = [
+        ("accounts_payable", "Line16", 77),
+        ("mortgages_notes_bonds_payable_less_than_one_year", "Line17", 81),
+        ("other_current_liabilities", "Line18", 85),
+        ("loans_from_shareholders", "Line19", 89),
+        ("mortgages_notes_bonds_payable_one_year_or_more", "Line20", 93),
+        ("other_liabilities", "Line21", 97),
+        ("capital_stock_preferred", "Line22a", 101),
+        ("capital_stock_common", "Line22b", 105),
+        ("additional_paid_in_capital", "Line23", 109),
+        ("retained_earnings_appropriated", "Line24", 113),
+        ("retained_earnings_unappropriated", "Line25", 117),
+        ("adjustments_to_shareholders_equity", "Line26", 121),
+        ("less_cost_of_treasury_stock", "Line27", 125),
+        ("total_liabilities_and_shareholders_equity", "Line28", 129),
+    ]
+    columns = [("beginning_a", 0), ("beginning_b", 1), ("end_c", 2), ("end_d", 3)]
+
+    for slug, row_name, base in asset_rows:
+        for column_name, offset in columns:
+            direct_fields[f"schedule_l.assets.{slug}.{column_name}"] = f"{PAGE6A}.{row_name}[0].f6_{base + offset}[0]"
+
+    for slug, row_name, base in liability_rows:
+        for column_name, offset in columns:
+            direct_fields[f"schedule_l.liabilities_and_equity.{slug}.{column_name}"] = (
+                f"{PAGE6L}.{row_name}[0].f6_{base + offset}[0]"
+            )
+
+    direct_fields.update(
+        {
+            "schedule_m1.net_income_loss_per_books": f"{PAGE6}.SchM-1_Left[0].f6_133[0]",
+            "schedule_m1.federal_income_tax_per_books": f"{PAGE6}.SchM-1_Left[0].f6_134[0]",
+            "schedule_m1.excess_capital_losses_over_capital_gains": f"{PAGE6}.SchM-1_Left[0].f6_135[0]",
+            "schedule_m1.income_subject_to_tax_not_recorded_description": f"{PAGE6}.SchM-1_Left[0].f6_136[0]",
+            "schedule_m1.income_subject_to_tax_not_recorded_amount": f"{PAGE6}.SchM-1_Left[0].f6_137[0]",
+            "schedule_m1.expenses_not_deducted_description": f"{PAGE6}.SchM-1_Left[0].f6_138[0]",
+            "schedule_m1.expenses_not_deducted_amount": f"{PAGE6}.SchM-1_Left[0].f6_144[0]",
+            "schedule_m1.tax_exempt_interest_description": f"{PAGE6}.SchM-1_Right[0].f6_146[0]",
+            "schedule_m1.tax_exempt_interest_amount": f"{PAGE6}.SchM-1_Right[0].f6_145[0]",
+            "schedule_m1.deductions_not_charged_description": f"{PAGE6}.SchM-1_Right[0].f6_147[0]",
+            "schedule_m1.deductions_not_charged_amount": f"{PAGE6}.SchM-1_Right[0].f6_148[0]",
+            "schedule_m1.expenses_not_deducted_depreciation": f"{PAGE6}.SchM-1_Left[0].f6_139[0]",
+            "schedule_m1.expenses_not_deducted_charitable_contributions": f"{PAGE6}.SchM-1_Left[0].f6_140[0]",
+            "schedule_m1.expenses_not_deducted_travel_and_entertainment": f"{PAGE6}.SchM-1_Left[0].f6_141[0]",
+            "schedule_m1.expenses_not_deducted_other": f"{PAGE6}.SchM-1_Left[0].f6_142[0]",
+            "schedule_m1.add_lines_1_through_5": f"{PAGE6}.SchM-1_Left[0].f6_143[0]",
+            "schedule_m1.deductions_not_charged_depreciation": f"{PAGE6}.SchM-1_Right[0].f6_149[0]",
+            "schedule_m1.deductions_not_charged_charitable_contributions": f"{PAGE6}.SchM-1_Right[0].f6_150[0]",
+            "schedule_m1.deductions_not_charged_travel_and_entertainment": f"{PAGE6}.SchM-1_Right[0].f6_151[0]",
+            "schedule_m1.deductions_not_charged_other": f"{PAGE6}.SchM-1_Right[0].f6_152[0]",
+            "schedule_m1.add_lines_7_and_8": f"{PAGE6}.SchM-1_Right[0].f6_153[0]",
+            "schedule_m1.line_10_line_6_less_line_9": f"{PAGE6}.SchM-1_Right[0].f6_154[0]",
+            "schedule_m1.line_10_income_page_1_line_28": f"{PAGE6}.SchM-1_Right[0].f6_155[0]",
+            "schedule_m2.balance_at_beginning_of_year": f"{PAGE6}.SchM-2_Left[0].f6_156[0]",
+            "schedule_m2.net_income_loss_per_books": f"{PAGE6}.SchM-2_Left[0].f6_157[0]",
+            "schedule_m2.other_increases_description": f"{PAGE6}.SchM-2_Left[0].f6_158[0]",
+            "schedule_m2.other_increases_amount": f"{PAGE6}.SchM-2_Left[0].f6_159[0]",
+            "schedule_m2.add_lines_1_2_and_3": f"{PAGE6}.SchM-2_Left[0].f6_160[0]",
+            "schedule_m2.other_decreases_description_left_copy": f"{PAGE6}.SchM-2_Left[0].f6_161[0]",
+            "schedule_m2.add_lines_1_2_and_3_amount": f"{PAGE6}.SchM-2_Left[0].f6_162[0]",
+            "schedule_m2.other_decreases_description": f"{PAGE6}.SchM-2_Right[0].f6_166[0]",
+            "schedule_m2.other_decreases_amount": f"{PAGE6}.SchM-2_Right[0].f6_167[0]",
+            "schedule_m2.distributions_cash": f"{PAGE6}.SchM-2_Right[0].f6_163[0]",
+            "schedule_m2.distributions_stock": f"{PAGE6}.SchM-2_Right[0].f6_164[0]",
+            "schedule_m2.distributions_property": f"{PAGE6}.SchM-2_Right[0].f6_165[0]",
+            "schedule_m2.add_lines_5_and_6": f"{PAGE6}.SchM-2_Right[0].f6_168[0]",
+            "schedule_m2.balance_at_end_of_year": f"{PAGE6}.SchM-2_Right[0].f6_169[0]",
+        }
+    )
 
 
 def _build_config() -> Form1120Config:
@@ -131,6 +319,8 @@ def _build_config() -> Form1120Config:
         }
     )
 
+    _add_schedule_c_fields(direct_fields)
+
     single_checkboxes = {
         "filing.consolidated_return": f"{A}.c1_1[0]",
         "filing.life_nonlife_consolidated_return": f"{A}.c1_2[0]",
@@ -141,6 +331,8 @@ def _build_config() -> Form1120Config:
         "filing.final_return": f"{PAGE1}.c1_7[0]",
         "filing.name_change": f"{PAGE1}.c1_8[0]",
         "filing.address_change": f"{PAGE1}.c1_9[0]",
+        "tax.form_2220_attached": f"{PAGE1}.c1_10[0]",
+        "paid_preparer.self_employed": f"{PAGE1}.c1_13[0]",
     }
 
     yes_no = {
@@ -167,11 +359,44 @@ def _build_config() -> Form1120Config:
         "schedule_k.form_7208_under_covered_corporation_rules": CheckboxPair("topmostSubform[0].Page5[0].c5_21[0]", "topmostSubform[0].Page5[0].c5_21[1]"),
         "schedule_k.form_7208_under_applicable_foreign_corporation_rules": CheckboxPair("topmostSubform[0].Page5[0].c5_22[0]", "topmostSubform[0].Page5[0].c5_22[1]"),
         "schedule_k.form_7208_under_covered_surrogate_foreign_corporation_rules": CheckboxPair("topmostSubform[0].Page5[0].c5_23[0]", "topmostSubform[0].Page5[0].c5_23[1]"),
-        "schedule_k.large_subchapter_k_basis_adjustment": CheckboxPair("topmostSubform[0].Page5[0].c5_25[0]", "topmostSubform[0].Page5[0].c5_25[1]"),
+        "schedule_k.large_subchapter_k_basis_adjustment": CheckboxPair("topmostSubform[0].Page5[0].c5_24[0]", "topmostSubform[0].Page5[0].c5_24[1]"),
+        "schedule_k.reserved_for_future_use_line_32": CheckboxPair("topmostSubform[0].Page5[0].c5_25[0]", "topmostSubform[0].Page5[0].c5_25[1]"),
         "schedule_k.foreign_owner_25_percent": CheckboxPair("topmostSubform[0].Page4[0].c4_8[0]", "topmostSubform[0].Page4[0].c4_8[1]"),
+        "signing.irs_may_discuss_with_preparer": CheckboxPair(f"{PAGE1}.c1_12[0]", f"{PAGE1}.c1_12[1]"),
     }
 
-    return Form1120Config(year=2025, direct_fields=direct_fields, single_checkboxes=single_checkboxes, yes_no_checkboxes=yes_no)
+    choice_checkboxes: dict[str, ChoiceCheckboxGroup] = {
+        "tax.refund_deposit_account_type": ChoiceCheckboxGroup(
+            options={
+                "checking": (f"{PAGE1}.c1_11[0]",),
+                "savings": (f"{PAGE1}.c1_11[1]",),
+            }
+        )
+    }
+    direct_fields.update(
+        {
+            "tax.routing_number": f"{PAGE1}.RoutingNo[0].f1_56[0]",
+            "tax.deposit_account_number": f"{PAGE1}.AccountNo[0].f1_57[0]",
+            "signing.officer_signature": f"{PAGE1}.SignHere-ReadOrder[0].f1_58[0]",
+            "paid_preparer.name": f"{PAGE1}.f1_59[0]",
+            "paid_preparer.ptin": f"{PAGE1}.f1_60[0]",
+            "paid_preparer.firm_name": f"{PAGE1}.f1_61[0]",
+            "paid_preparer.firm_ein": f"{PAGE1}.f1_62[0]",
+            "paid_preparer.firm_address": f"{PAGE1}.f1_63[0]",
+            "paid_preparer.phone_number": f"{PAGE1}.f1_64[0]",
+            "schedule_j.reserved_for_future_use": "topmostSubform[0].Page3[0].f3_37[0]",
+        }
+    )
+    _add_schedule_k_page4_fields(direct_fields, single_checkboxes, yes_no, choice_checkboxes)
+    _add_schedule_l_m1_m2_fields(direct_fields)
+
+    return Form1120Config(
+        year=2025,
+        direct_fields=direct_fields,
+        single_checkboxes=single_checkboxes,
+        yes_no_checkboxes=yes_no,
+        choice_checkboxes=choice_checkboxes,
+    )
 
 
 CONFIG_2025 = _build_config()
